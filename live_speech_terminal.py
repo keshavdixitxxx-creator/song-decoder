@@ -20,10 +20,9 @@ from __future__ import annotations
 
 import argparse
 import queue
-import sys
 import time
 from collections import deque
-from typing import Iterable
+from typing import Any
 
 import numpy as np
 import sounddevice as sd
@@ -76,8 +75,13 @@ def typewriter(console: Console, value: str, color: str, enabled: bool) -> None:
     console.print()
 
 
-def audio_callback(indata: np.ndarray, frames: int, time_info: object, status: sd.CallbackFlags,
-                   audio_queue: queue.Queue[np.ndarray]) -> None:
+def audio_callback(
+    indata: np.ndarray,
+    frames: int,
+    time_info: object,
+    status: sd.CallbackFlags,
+    audio_queue: queue.Queue[np.ndarray],
+) -> None:
     # Keep callback short; inference happens on the main thread.
     if status:
         # Device overflow/underflow notices are reported by sounddevice; audio continues.
@@ -93,8 +97,11 @@ def audio_callback(indata: np.ndarray, frames: int, time_info: object, status: s
             pass
 
 
-def collect_audio(audio_queue: queue.Queue[np.ndarray], needed_samples: int,
-                  carry: deque[np.ndarray]) -> np.ndarray:
+def collect_audio(
+    audio_queue: queue.Queue[np.ndarray],
+    needed_samples: int,
+    carry: deque[np.ndarray],
+) -> np.ndarray:
     pieces: list[np.ndarray] = list(carry)
     total = sum(piece.size for piece in pieces)
     while total < needed_samples:
@@ -104,6 +111,7 @@ def collect_audio(audio_queue: queue.Queue[np.ndarray], needed_samples: int,
             continue
         pieces.append(block)
         total += block.size
+
     combined = np.concatenate(pieces).astype(np.float32, copy=False)
     chunk = combined[-needed_samples:]
     overlap_samples = int(OVERLAP_SECONDS * SAMPLE_RATE)
@@ -117,7 +125,11 @@ def normalize_text(value: str) -> str:
     return " ".join(value.strip().split()).casefold()
 
 
-def transcribe_chunk(model: WhisperModel, samples: np.ndarray, language: str | None) -> tuple[str | None, list[str]]:
+def transcribe_chunk(
+    model: WhisperModel,
+    samples: np.ndarray,
+    language: str | None,
+) -> tuple[str | None, list[str]]:
     segments, info = model.transcribe(
         samples,
         language=language,
@@ -127,7 +139,11 @@ def transcribe_chunk(model: WhisperModel, samples: np.ndarray, language: str | N
         condition_on_previous_text=False,
         without_timestamps=True,
     )
-    lines = [segment.text.strip() for segment in segments if segment.text and segment.text.strip()]
+    lines = [
+        segment.text.strip()
+        for segment in segments
+        if segment.text and segment.text.strip()
+    ]
     detected_language = getattr(info, "language", None)
     return detected_language, lines
 
@@ -135,19 +151,23 @@ def transcribe_chunk(model: WhisperModel, samples: np.ndarray, language: str | N
 def main() -> int:
     args = parse_args()
     console = Console()
+
     if args.list_devices:
         print_devices()
         return 0
+
     if args.chunk_seconds < 3:
         console.print("[bold red]--chunk-seconds must be at least 3.[/bold red]")
         return 2
 
-    console.print(Panel.fit(
-        "[bold bright_white]♫ LIVE SPEECH TERMINAL[/bold bright_white]\n"
-        "[bright_cyan]Multilingual microphone transcription[/bright_cyan]\n"
-        "[dim]Listening to microphone/input audio — not browser or song lyrics.[/dim]",
-        border_style="bright_magenta",
-    ))
+    console.print(
+        Panel.fit(
+            "[bold bright_white]♫ LIVE SPEECH TERMINAL[/bold bright_white]\n"
+            "[bright_cyan]Multilingual microphone transcription[/bright_cyan]\n"
+            "[dim]Listening to microphone/input audio — not browser or song lyrics.[/dim]",
+            border_style="bright_magenta",
+        )
+    )
     console.print("[dim]Press Ctrl+C to stop. First run may download the Whisper model.[/dim]")
     console.print(f"[dim]Loading Whisper {args.model} model on CPU (int8)…[/dim]")
 
@@ -171,3 +191,64 @@ def main() -> int:
             device=args.device,
             samplerate=SAMPLE_RATE,
             channels=CHANNELS,
+            dtype="float32",
+            blocksize=int(BLOCK_SECONDS * SAMPLE_RATE),
+            callback=callback,
+        ):
+            console.print("[bold green]● MICROPHONE ACTIVE[/bold green]  [dim]Speak naturally…[/dim]\n")
+            with Live(
+                Panel("Waiting for speech…", border_style="bright_cyan"),
+                console=console,
+                refresh_per_second=4,
+                transient=True,
+            ) as live:
+                while True:
+                    audio = collect_audio(audio_queue, needed_samples, carry)
+                    detected_language, lines = transcribe_chunk(
+                        model, audio, args.language
+                    )
+                    if not lines:
+                        live.update(
+                            Panel(
+                                "[dim]Listening… no clear speech detected yet.[/dim]",
+                                border_style="bright_cyan",
+                            )
+                        )
+                        continue
+
+                    lang_text = detected_language or args.language or "unknown"
+                    live.update(
+                        Panel(
+                            f"[bold bright_white]Recognized speech[/bold bright_white]  "
+                            f"[bright_cyan]Language: {lang_text}[/bright_cyan]",
+                            border_style="bright_cyan",
+                        )
+                    )
+
+                    for line in lines:
+                        key = normalize_text(line)
+                        if not key or key == last_text:
+                            continue
+                        last_text = key
+                        color = COLORS[color_index % len(COLORS)]
+                        color_index += 1
+                        typewriter(console, line, color, not args.no_typewriter)
+
+    except KeyboardInterrupt:
+        console.print("\n[bold bright_magenta]Transcription stopped.[/bold bright_magenta]")
+    except (sd.PortAudioError, OSError) as exc:
+        console.print(f"[bold red]Microphone/audio device error:[/bold red] {exc}")
+        console.print(
+            "[dim]Run 'py live_speech_terminal.py --list-devices' and choose "
+            "an input device with --device.[/dim]"
+        )
+        return 1
+
+    return 0
+
+
+if __name__ == "__main__":
+    try:
+        raise SystemExit(main())
+    except KeyboardInterrupt:
+        raise SystemExit(0)
