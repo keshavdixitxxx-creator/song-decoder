@@ -4,7 +4,7 @@ This repository contains a live caption-to-terminal bridge for videos and captio
 
 ## Run
 
-Open VS Code in the live-caption-bridge folder and run:
+Use Python 3.10 or newer. Open VS Code in the live-caption-bridge folder and run:
 
     py caption_terminal.py
 
