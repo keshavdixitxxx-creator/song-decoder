@@ -84,6 +84,30 @@ py live_speech_terminal.py --list-devices
 
 This microphone mode does not connect to browser audio.
 
+## 4. Aesthetic terminal caption animation
+
+`aesthetic_caption_player.py` recreates the character-by-character, multi-colour typing effect. It accepts UTF-8 `.srt`, `.vtt`, and `.txt` caption files; SRT/VTT timestamps determine when each line appears.
+
+Run the original demo:
+
+```powershell
+py aesthetic_caption_player.py --demo
+```
+
+Animate the included sample captions:
+
+```powershell
+py aesthetic_caption_player.py --file sample_captions.vtt
+```
+
+Adjust the typing speed (seconds per character):
+
+```powershell
+py aesthetic_caption_player.py --file sample_captions.vtt --speed 0.03
+```
+
+No third-party packages are required. Use caption files you created or are authorized to process. This is a caption-file animator; it does not capture browser audio or fetch lyrics.
+
 ## Troubleshooting
 
 - For visible YouTube captions, make sure the program-launched browser is open, a video is playing, and CC is enabled.
