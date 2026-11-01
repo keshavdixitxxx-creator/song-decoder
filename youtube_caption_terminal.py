@@ -124,7 +124,7 @@ def launch_debug_browser(browser_name: str) -> tuple[int, subprocess.Popen[Any]]
     executable = find_browser(browser_name)
     port = free_port()
     local_root = Path(os.environ.get("LOCALAPPDATA", str(Path.home())))
-    profile_dir = local_root + "CaptionTerminal" / f"{browser_name}-profile"
+    profile_dir = local_root / "CaptionTerminal" / f"{browser_name}-profile"
     profile_dir.mkdir(parents=True, exist_ok=True)
 
     command = [
@@ -210,7 +210,7 @@ def main() -> int:
         border_style="bright_magenta",
     ))
     if not args.connect_url:
-        console.print("[dim]A separate browser profile has opened. Sign in there if needed.[/dim]")
+        console.print("[dim]Use THIS newly opened browser window for YouTube. The script cannot see videos playing in a different, already-open browser window.[/dim]")
     console.print("[dim]Use only with captions you own or are authorized to process. Press Ctrl+C to stop.[/dim]\n")
 
     playwright = sync_playwright().start()
