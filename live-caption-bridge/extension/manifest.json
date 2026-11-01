@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "Live Caption to Terminal (Authorized Videos)",
+  "version": "1.0.0",
+  "description": "Forwards visible native HTML5 captions from a selected video tab to a local Python terminal.",
+  "permissions": ["activeTab", "scripting", "tabs"],
+  "host_permissions": ["http://127.0.0.1:39471/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Send visible captions to VS Code terminal",
+    "default_popup": "popup.html"
+  }
+}
