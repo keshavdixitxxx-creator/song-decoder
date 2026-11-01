@@ -1,2 +1,0 @@
-rich>=13.7
-winrt-Windows.Media.Control>=3.1
