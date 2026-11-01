@@ -13,6 +13,8 @@ This project forwards new caption lines that are currently visible on a video to
 
 ## Setup (Windows 10/11, Chrome or Edge)
 
+Use Python 3.10 or newer.
+
 1. Open VS Code in this folder.
 2. Start the Python receiver in the integrated terminal:
 
