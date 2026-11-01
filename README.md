@@ -1,57 +1,97 @@
 # Auto Karaoke Terminal
 
-A Windows terminal app that detects the currently active media session (such as YouTube in Chrome/Edge or Spotify) and displays matching lyric files in a colorful, live terminal.
+This repository contains small Windows terminal experiments for media metadata and caption display.
 
-## Requirements
+## 1. Media metadata + local lyric files
 
-- Windows 10 or Windows 11
-- Python 3.11+
-- A browser or music app that exposes playback metadata through Windows media controls
+The original `auto_karaoke_terminal.py` detects the currently active Windows media session and displays matching local lyric files.
 
-## Install
-
-Open PowerShell or the VS Code terminal in this folder:
+Install:
 
 ```powershell
 py -m pip install -r requirements.txt
 ```
 
-## Run
+Run:
 
 ```powershell
 py auto_karaoke_terminal.py
 ```
 
-Choose a theme:
+Themes: `neon`, `sunset`, `ocean`, `monochrome`.
+
+The metadata detector does not retrieve lyrics from streaming services. It reads locally supplied UTF-8 `.lrc` or `.txt` files from `lyrics/`.
+
+## 2. Visible YouTube captions in the terminal
+
+`youtube_caption_terminal.py` opens a dedicated Chrome or Edge profile, connects to that browser through the Chrome DevTools Protocol, and reads only the caption text currently rendered in YouTube's visible CC overlay. It animates newly displayed caption text in different terminal colors.
+
+It does not download subtitle tracks or scrape hidden transcripts.
+
+Install:
 
 ```powershell
-py auto_karaoke_terminal.py --theme neon
-py auto_karaoke_terminal.py --theme sunset
-py auto_karaoke_terminal.py --theme ocean
-py auto_karaoke_terminal.py --theme monochrome
+py -m pip install -r requirements-captions.txt
 ```
 
-Press `Ctrl+C` to quit.
+Run:
 
-## Lyrics
+```powershell
+py youtube_caption_terminal.py
+```
 
-The app detects the song title, artist, playback status, and position. It does **not** retrieve lyrics from YouTube or Spotify.
+Or use Edge:
 
-Place lyric files that you wrote, supplied, or are licensed to use in the `lyrics/` folder:
+```powershell
+py youtube_caption_terminal.py --browser edge
+```
 
-- `.lrc` for timestamp-synchronized lyrics
-- `.txt` for plain text (scrolling is approximate)
+The script opens a separate browser profile under your local application data. Sign into YouTube in that browser if you need to, open a video, and turn on the **CC** button. The program will display captions while they are visible in the player. Press `Ctrl+C` to stop.
 
-Save files as UTF-8. Unicode text is supported, including Punjabi, Hindi, Arabic, Korean, Japanese, Spanish, and other languages. Exact display depends on the terminal's font support.
+You can change the typing speed or polling interval:
 
-The filename should approximately match the cleaned song title, for example `Softly.lrc`. The app also supports artist-plus-title filenames and cautious fuzzy matching.
+```powershell
+py youtube_caption_terminal.py --type-speed 0.01 --poll 0.15
+```
+
+Use this caption display only with videos/captions you own or are authorized to process. Captions must be enabled and available for the video. If a video has no captions, the terminal cannot create them.
+
+### Why does it open a separate browser profile?
+
+Recent Chrome versions require remote debugging to use a non-default user-data directory. This script creates a dedicated profile so it does not need access to your normal browser profile. The first run may require you to sign in again in that separate profile.
+
+## 3. Microphone speech transcription
+
+`live_speech_terminal.py` uses a local Whisper model to transcribe speech from a selected microphone/input device.
+
+Install:
+
+```powershell
+py -m pip install -r requirements-live-speech.txt
+```
+
+Run:
+
+```powershell
+py live_speech_terminal.py
+```
+
+List input devices:
+
+```powershell
+py live_speech_terminal.py --list-devices
+```
+
+This microphone mode does not connect to browser audio.
 
 ## Troubleshooting
 
-- If no song appears, check that the browser/app exposes its media session to Windows.
-- If lyrics are not found, verify the filename and place the UTF-8 `.lrc` or `.txt` file in `lyrics/`.
-- For unsupported glyphs, change the VS Code terminal font to one with the required script coverage.
+- For visible YouTube captions, make sure the program-launched browser is open, a video is playing, and CC is enabled.
+- If Chrome is not installed, use `--browser edge`.
+- If the caption overlay does not appear in the terminal, the video may not provide captions or YouTube may have changed its page markup.
+- For microphone transcription, check Windows microphone permissions and select the correct input device.
+- For unsupported scripts/glyphs, use a terminal font with appropriate Unicode coverage.
 
-## License
+## Permissions and licensing
 
-Choose and add a license before redistributing this project. Do not add copyrighted song lyrics to the repository without permission.
+Use the caption and transcription features only with content you own or are authorized to process. Do not add copyrighted caption or lyric text to this repository without permission. Choose and add an open-source license before redistributing the project.
