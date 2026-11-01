@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Local Video Caption Test</title>
+  <style>
+    body { max-width: 850px; margin: 32px auto; padding: 0 18px; color: #eee; background: #171323; font: 16px/1.5 system-ui, sans-serif; }
+    h1 { color: #f0abfc; }
+    .panel { padding: 18px; border: 1px solid #51406d; border-radius: 12px; background: #211a32; }
+    label { display: block; margin: 14px 0 6px; color: #ddd6fe; }
+    input, button { display: block; margin-top: 6px; }
+    button { padding: 10px 16px; color: #171323; background: #e879f9; border: 0; border-radius: 8px; font-weight: 700; cursor: pointer; }
+    video { display: block; width: 100%; max-height: 480px; margin-top: 18px; background: #000; }
+    #status { color: #c4b5fd; }
+    code { color: #f9a8d4; }
+  </style>
+</head>
+<body>
+  <h1>Local Video Caption Test</h1>
+  <div class="panel">
+    <p>Choose a video file and a WebVTT (.vtt) caption file. The browser displays the captions on the video; the extension forwards those visible cues to VS Code.</p>
+    <label for="videoFile">Your video file</label>
+    <input id="videoFile" type="file" accept="video/*">
+    <label for="captionFile">Your caption file (.vtt)</label>
+    <input id="captionFile" type="file" accept=".vtt,text/vtt">
+    <button id="load">Load video and captions</button>
+    <p id="status">Choose both files, then load them.</p>
+  </div>
+  <video id="player" controls playsinline></video>
+  <script>
+    const videoInput = document.getElementById("videoFile");
+    const captionInput = document.getElementById("captionFile");
+    const player = document.getElementById("player");
+    const status = document.getElementById("status");
+    let videoUrl = null;
+    let captionUrl = null;
+
+    document.getElementById("load").addEventListener("click", () => {
+      const videoFile = videoInput.files[0];
+      const captionFile = captionInput.files[0];
+      if (!videoFile || !captionFile) {
+        status.textContent = "Select both a video file and a .vtt caption file.";
+        return;
+      }
+      if (videoUrl) URL.revokeObjectURL(videoUrl);
+      if (captionUrl) URL.revokeObjectURL(captionUrl);
+      videoUrl = URL.createObjectURL(videoFile);
+      captionUrl = URL.createObjectURL(captionFile);
+      player.pause();
+      player.replaceChildren();
+      player.src = videoUrl;
+      const track = document.createElement("track");
+      track.kind = "captions";
+      track.label = "Captions";
+      track.srclang = "en";
+      track.default = true;
+      track.src = captionUrl;
+      track.addEventListener("load", () => {
+        track.track.mode = "showing";
+        status.textContent = "Ready. Play the video, then click the extension and choose Start on this tab.";
+      });
+      track.addEventListener("error", () => {
+        status.textContent = "Could not load this .vtt file. Make sure it is valid UTF-8 WebVTT.";
+      });
+      player.appendChild(track);
+      player.load();
+      status.textContent = "Loading captions…";
+      window.setTimeout(() => {
+        try { track.track.mode = "showing"; } catch (_) {}
+      }, 300);
+    });
+  </script>
+</body>
+</html>
