@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Live Caption Terminal</title>
+  <style>
+    body { width: 300px; margin: 0; padding: 16px; color: #f5f3ff; background: #171323; font: 14px/1.45 system-ui, sans-serif; }
+    h1 { font-size: 16px; margin: 0 0 6px; color: #f0abfc; }
+    p { margin: 8px 0; color: #c4b5fd; }
+    .status { min-height: 48px; margin: 12px 0; padding: 10px; border: 1px solid #51406d; border-radius: 8px; color: #e9d5ff; background: #211a32; }
+    button { width: 100%; margin-top: 8px; padding: 10px; border: 0; border-radius: 8px; color: #171323; background: #e879f9; font-weight: 700; cursor: pointer; }
+    button.secondary { color: #f5f3ff; background: #51406d; }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    small { display: block; margin-top: 12px; color: #a78bfa; }
+  </style>
+</head>
+<body>
+  <h1>♫ Live Caption Terminal</h1>
+  <p>Send new visible HTML5 caption lines to your VS Code terminal.</p>
+  <div id="status" class="status">Checking connection…</div>
+  <button id="start">Start on this tab</button>
+  <button id="stop" class="secondary">Stop capture</button>
+  <small>Only active native caption tracks are read. YouTube, YouTube Music and Spotify are blocked. This does not read Chrome Live Caption or transcribe audio.</small>
+  <script src="popup.js"></script>
+</body>
+</html>
